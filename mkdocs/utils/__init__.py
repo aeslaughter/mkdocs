@@ -63,8 +63,9 @@ def yaml_load(source, loader=yaml.Loader):
         http://stackoverflow.com/questions/528281/how-can-i-include-an-yaml-file-inside-another
         """
         filename = os.path.join(self._root, self.construct_scalar(node))
-        with open(filename, 'r') as f:
-            return yaml.load(f, Loader)
+        if os.path.exists(filename):
+            with open(filename, 'r') as f:
+                return yaml.load(f, Loader)
 
     class Loader(loader):
         """
