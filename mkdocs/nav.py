@@ -157,7 +157,7 @@ class Page(object):
         self.input_path = path
         self.output_path = utils.get_html_path(path)
         self.modified_time = None
-        self.subpages = self.find_subpages()
+        self.subpages = []
 
         # Links to related pages
         self.previous_page = None
@@ -214,15 +214,13 @@ class Page(object):
         return False
 
     def find_subpages(self):
-        subpages = []
+        self.subpages = []
         with open(self.input_path) as fid:
             content = fid.read()
             for match in re.finditer(r'\{!(.*?)!\}', content):
                 filename = match.group(1)
                 if os.path.exists(filename):
-                    subpages.append( (filename, os.path.getmtime(filename)) )
-
-        return subpages
+                    self.subpages.append( (filename, os.path.getmtime(filename)) )
 
 class Header(object):
     def __init__(self, title, children):

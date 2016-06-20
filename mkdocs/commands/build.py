@@ -287,6 +287,7 @@ def build_pages(config, dump_json=False, cache=None):
             # Set the modified time if it has not been set
             if page.modified_time == None:
                 page.modified_time = os.path.getmtime(page.input_path)
+                page.find_subpages()
 
             log.debug("Building page %s", page.input_path)
             build_result = _build_page(page, config, site_navigation, env,
