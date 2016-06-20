@@ -14,7 +14,7 @@ def _livereload(host, port, config, builder, site_dir):
     # We are importing here for anyone that has issues with livereload. Even if
     # this fails, the --no-livereload alternative should still work.
     from livereload import Server, watcher
-    import os, sys, glob
+    import os, sys, glob, re
 
     class MkDocsWatcher(watcher.Watcher):
         def is_glob_changed(self, path, ignore=None):
@@ -26,8 +26,16 @@ def _livereload(host, port, config, builder, site_dir):
                         for f in glob.glob(os.path.join(root, name, wildcard.strip(os.path.sep))):
                             if self.is_file_changed(f, ignore):
                                 return True
+
+                            # Check sub-pages
+                            with open(f) as fid:
+                                content = fid.read()
+                                for match in re.finditer(r'\{!(.*?)!\}', content):
+                                    subpage = match.group(1)
+                                    if os.path.exists(subpage):
+                                        if self.is_file_changed(subpage, ignore):
+                                            return True
                 return False
-                #return super(MkDocsWatcher, self).is_glob_changed(path, ignore)
             else:
                 return super(MkDocsWatcher, self).is_glob_changed(path, ignore)
 
@@ -36,8 +44,7 @@ def _livereload(host, port, config, builder, site_dir):
     server = Server(None, watcher)
 
     # Watch the documentation files, the config file and the theme files.
-    #server.watch(os.path.join(config['docs_dir'], '**', '*.md'), builder)
-    server.watch(config['docs_dir'], builder)
+    server.watch(os.path.join(config['docs_dir'], '**', '*.md'), builder)
     server.watch(config['config_file_path'], builder)
 
     for d in config['theme_dir']:

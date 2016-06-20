@@ -10,6 +10,7 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import os
+import re
 
 from mkdocs import utils, exceptions
 
@@ -156,6 +157,7 @@ class Page(object):
         self.input_path = path
         self.output_path = utils.get_html_path(path)
         self.modified_time = None
+        self.subpages = self.find_subpages()
 
         # Links to related pages
         self.previous_page = None
@@ -200,6 +202,27 @@ class Page(object):
             base += '/'
         self.canonical_url = utils.urljoin(base, self.abs_url.lstrip('/'))
 
+    def modified(self):
+        if self.modified_time != os.path.getmtime(self.input_path):
+            return True
+
+        for subpage in self.subpages:
+            filename, modified = subpage
+            if modified != os.path.getmtime(filename):
+                return True
+
+        return False
+
+    def find_subpages(self):
+        subpages = []
+        with open(self.input_path) as fid:
+            content = fid.read()
+            for match in re.finditer(r'\{!(.*?)!\}', content):
+                filename = match.group(1)
+                if os.path.exists(filename):
+                    subpages.append( (filename, os.path.getmtime(filename)) )
+
+        return subpages
 
 class Header(object):
     def __init__(self, title, children):

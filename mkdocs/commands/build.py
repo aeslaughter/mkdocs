@@ -281,7 +281,7 @@ def build_pages(config, dump_json=False, cache=None):
     for page in site_navigation.walk_pages():
         try:
             # Do nothing if the page hasn't changed
-            if (os.path.getmtime(page.input_path) == page.modified_time):
+            if not page.modified():
                 continue
 
             # Set the modified time if it has not been set
