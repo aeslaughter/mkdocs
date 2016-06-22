@@ -47,7 +47,7 @@ if sys.argv[-1] == 'publish':
 
 
 setup(
-    name="mkdocs",
+    name="mkmoosedocs",
     version=get_version("mkdocs"),
     url='http://www.mkdocs.org',
     license='BSD',
