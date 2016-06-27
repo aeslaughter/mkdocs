@@ -167,6 +167,9 @@ def _build_page(page, config, site_navigation, env, dump_json):
         log.error('file not found: %s', input_path)
         raise
 
+    # Store the filename in the markdown
+    input_content = "<!-- {} -->\n{}".format(input_path, input_content)
+
     # Process the markdown text
     html_content, table_of_contents, meta = convert_markdown(
         markdown_source=input_content,
