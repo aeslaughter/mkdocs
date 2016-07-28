@@ -181,7 +181,7 @@ def build_template(template_name, env, config, site_navigation=None):
     return True
 
 
-def _build_page(page, config, site_navigation, env, dump_json, dirty=False):
+def _build_page(page, config, site_navigation, env, dump_json, search_index):
 
     # Get the input/output paths
     input_path, output_path = get_complete_paths(config, page)
@@ -236,7 +236,9 @@ def _build_page(page, config, site_navigation, env, dump_json, dirty=False):
     else:
         utils.write_file(output_content.encode('utf-8'), output_path)
 
-    return html_content, table_of_contents, meta
+    search_index.add_entry_from_context(page, html_content, table_of_contents)
+    #output.append( (html_content, table_of_contents, meta, page) )
+    #return html_content, table_of_contents, meta
 
 
 def build_extra_templates(extra_templates, config, site_navigation=None):
@@ -308,6 +310,34 @@ def build_pages(config, dump_json=False, dirty=False):
 
     build_extra_templates(config['extra_templates'], config, site_navigation)
 
+    pages = []
+    for page in site_navigation.walk_pages():
+        # When --dirty is used, only build the page if the markdown has been modified since the
+        # previous build of the output.
+        input_path, output_path = get_complete_paths(config, page)
+        if dirty and (utils.modified_time(input_path) < utils.modified_time(output_path)):
+            continue
+
+        pages.append(page)
+
+    import multiprocessing
+    manager = multiprocessing.Manager()
+    #results = manager.list()
+    jobs = []
+    for i in range(len(pages)):
+        p = multiprocessing.Process(target=_build_page, args=(pages[i], config, site_navigation, env, dump_json, search_index))
+        jobs.append(p)
+        p.start()
+
+    #for proc in jobs:
+    #    proc.join()
+
+    #for build_result in results:
+    #    html_content, table_of_contents, _, page = build_result
+    #    search_index.add_entry_from_context(page, html_content, table_of_contents)
+
+
+    """
     for page in site_navigation.walk_pages():
 
         try:
@@ -324,9 +354,11 @@ def build_pages(config, dump_json=False, dirty=False):
             html_content, table_of_contents, _ = build_result
             search_index.add_entry_from_context(
                 page, html_content, table_of_contents)
+
         except Exception:
             log.error("Error building page %s", page.input_path)
             raise
+    """
 
     search_index = search_index.generate_search_index()
     json_output_path = os.path.join(config['site_dir'], 'mkdocs', 'search_index.json')
