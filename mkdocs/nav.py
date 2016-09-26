@@ -142,6 +142,9 @@ class Page(object):
         self.abs_url = url
         self.active = False
         self.url_context = url_context
+        self.html_content = None
+        self.table_of_contents = None
+        self.meta = None
 
         # Support SOURCE_DATE_EPOCH environment variable for "reproducible" builds.
         # See https://reproducible-builds.org/specs/source-date-epoch/

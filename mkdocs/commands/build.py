@@ -183,6 +183,7 @@ def build_template(template_name, env, config, site_navigation=None):
 
 def _build_page(page, config, site_navigation, env, dump_json, dirty=False):
 
+    """
     # Get the input/output paths
     input_path, output_path = get_complete_paths(config, page)
 
@@ -199,10 +200,10 @@ def _build_page(page, config, site_navigation, env, dump_json, dirty=False):
         config=config,
         site_navigation=site_navigation
     )
-
+    """
     context = get_global_context(site_navigation, config)
     context.update(get_page_context(
-        page, html_content, table_of_contents, meta, config
+        page, page.html_content, page.table_of_contents, page.meta, config
     ))
 
     # Allow 'template:' override in md source files.
@@ -236,7 +237,7 @@ def _build_page(page, config, site_navigation, env, dump_json, dirty=False):
     else:
         utils.write_file(output_content.encode('utf-8'), output_path)
 
-    return html_content, table_of_contents, meta
+    return page.html_content, page.table_of_contents, page.meta
 
 
 def build_extra_templates(extra_templates, config, site_navigation=None):
@@ -316,6 +317,25 @@ def build_pages(config, dump_json=False, dirty=False):
     build_template('sitemap.xml', env, config, site_navigation)
 
     build_extra_templates(config['extra_templates'], config, site_navigation)
+
+
+    for page in  site_navigation.pages:
+
+        # Get the input/output paths
+        input_path, output_path = get_complete_paths(config, page)
+
+        # Read the input file
+        try:
+            input_content = io.open(input_path, 'r', encoding='utf-8').read()
+        except IOError:
+            log.error('file not found: %s', input_path)
+            raise
+
+        page.html_content, page.table_of_contents, page.meta = convert_markdown(
+        markdown_source=input_content,
+        config=config,
+        site_navigation=site_navigation
+    )
 
     for page in site_navigation.walk_pages():
 
